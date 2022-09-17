@@ -268,11 +268,11 @@ var (
 
 	// bind{{.Type}} binds a generic wrapper to an already deployed contract.
 	func bind{{.Type}}(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	  parsed, err := abi.JSON(strings.NewReader({{.Type}}ABI))
+	  parsed, err := {{.Type}}MetaData.GetAbi()
 	  if err != nil {
 	    return nil, err
 	  }
-	  return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+	  return bind.NewBoundContract(address, *parsed, caller, transactor, filterer), nil
 	}
 
 	// Call invokes the (constant) contract method with params as input values and
@@ -338,6 +338,22 @@ var (
 			
 			return {{range $i, $t := .Normalized.Outputs}}out{{$i}}, {{end}} err
 			{{end}}
+		}
+
+		// Get{{.Normalized.Name}}CallData returns the raw call data for the contract method 0x{{printf "%x" .Original.ID}}.
+		// It does not actually call the contract.
+		func (_{{$contract.Type}} *{{$contract.Type}}Caller) Get{{.Normalized.Name}}CallData({{range $idx, $el := .Normalized.Inputs}}{{if $idx}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) ([]byte, error) {
+			parsed, err := {{$contract.Type}}MetaData.GetAbi()
+			if err != nil {
+				return nil, err
+			}
+
+			out, err := parsed.Pack("{{.Original.Name}}" {{range .Normalized.Inputs}}, {{.Name}}{{end}})
+			if err != nil {
+				return nil, err
+			}
+
+			return out, nil
 		}
 
 		// {{.Normalized.Name}} is a free data retrieval call binding the contract method 0x{{printf "%x" .Original.ID}}.
