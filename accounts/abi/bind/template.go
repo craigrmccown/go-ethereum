@@ -392,6 +392,22 @@ var (
 		func (_{{$contract.Type}} *{{$contract.Type}}TransactorSession) {{.Normalized.Name}}({{range $i, $_ := .Normalized.Inputs}}{{if ne $i 0}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) (*types.Transaction, error) {
 		  return _{{$contract.Type}}.Contract.{{.Normalized.Name}}(&_{{$contract.Type}}.TransactOpts {{range $i, $_ := .Normalized.Inputs}}, {{.Name}}{{end}})
 		}
+
+		// Get{{.Normalized.Name}}CallData returns the raw call data for the contract method 0x{{printf "%x" .Original.ID}}.
+		// It does not actually call the contract.
+		func (_{{$contract.Type}} *{{$contract.Type}}Caller) Get{{.Normalized.Name}}CallData({{range $idx, $el := .Normalized.Inputs}}{{if $idx}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) ([]byte, error) {
+			parsed, err := {{$contract.Type}}MetaData.GetAbi()
+			if err != nil {
+				return nil, err
+			}
+
+			out, err := parsed.Pack("{{.Original.Name}}" {{range .Normalized.Inputs}}, {{.Name}}{{end}})
+			if err != nil {
+				return nil, err
+			}
+
+			return out, nil
+		}
 	{{end}}
 
 	{{if .Fallback}} 
