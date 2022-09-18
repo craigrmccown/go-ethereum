@@ -356,6 +356,44 @@ var (
 			return out, nil
 		}
 
+		// Unmarshall{{.Normalized.Name}} unmarshalls the binary output of {{.Normalized.Name}}.
+		//
+		// Solidity: {{.Original.String}}
+		func (_{{$contract.Type}} *{{$contract.Type}}Caller) Unmarshall{{.Normalized.Name}}(output []byte) ({{if .Structured}}struct{ {{range .Normalized.Outputs}}{{.Name}} {{bindtype .Type $structs}};{{end}} },{{else}}{{range .Normalized.Outputs}}{{bindtype .Type $structs}},{{end}}{{end}} error) {
+			{{if .Structured}}
+			outstruct := new(struct{ {{range .Normalized.Outputs}} {{.Name}} {{bindtype .Type $structs}}; {{end}} })
+			{{end}}
+
+			parsed, err := {{$contract.Type}}MetaData.GetAbi()
+			if err != nil {
+				{{if .Structured}}
+				return *outstruct, err
+				{{else}}
+				return {{range $i, $_ := .Normalized.Outputs}}*new({{bindtype .Type $structs}}), {{end}} err
+				{{end}}
+			}
+
+			out, err := parsed.Unpack("{{.Original.Name}}", output)
+			{{if .Structured}}
+			if err != nil {
+				return *outstruct, err
+			}
+			{{range $i, $t := .Normalized.Outputs}} 
+			outstruct.{{.Name}} = *abi.ConvertType(out[{{$i}}], new({{bindtype .Type $structs}})).(*{{bindtype .Type $structs}}){{end}}
+
+			return *outstruct, err
+			{{else}}
+			if err != nil {
+				return {{range $i, $_ := .Normalized.Outputs}}*new({{bindtype .Type $structs}}), {{end}} err
+			}
+			{{range $i, $t := .Normalized.Outputs}}
+			out{{$i}} := *abi.ConvertType(out[{{$i}}], new({{bindtype .Type $structs}})).(*{{bindtype .Type $structs}}){{end}}
+			
+			return {{range $i, $t := .Normalized.Outputs}}out{{$i}}, {{end}} err
+			{{end}}
+		}
+
+
 		// {{.Normalized.Name}} is a free data retrieval call binding the contract method 0x{{printf "%x" .Original.ID}}.
 		//
 		// Solidity: {{.Original.String}}
