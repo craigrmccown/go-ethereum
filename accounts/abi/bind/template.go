@@ -340,9 +340,9 @@ var (
 			{{end}}
 		}
 
-		// Get{{.Normalized.Name}}CallData returns the raw call data for the contract method 0x{{printf "%x" .Original.ID}}.
+		// Generate{{.Normalized.Name}}CallData returns the raw call data for the contract method 0x{{printf "%x" .Original.ID}}.
 		// It does not actually call the contract.
-		func (_{{$contract.Type}} *{{$contract.Type}}Caller) Get{{.Normalized.Name}}CallData({{range $idx, $el := .Normalized.Inputs}}{{if $idx}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) ([]byte, error) {
+		func Generate{{.Normalized.Name}}CallData({{range $idx, $el := .Normalized.Inputs}}{{if $idx}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) ([]byte, error) {
 			parsed, err := {{$contract.Type}}MetaData.GetAbi()
 			if err != nil {
 				return nil, err
@@ -359,7 +359,7 @@ var (
 		// Unmarshall{{.Normalized.Name}} unmarshalls the binary output of {{.Normalized.Name}}.
 		//
 		// Solidity: {{.Original.String}}
-		func (_{{$contract.Type}} *{{$contract.Type}}Caller) Unmarshall{{.Normalized.Name}}(output []byte) ({{if .Structured}}struct{ {{range .Normalized.Outputs}}{{.Name}} {{bindtype .Type $structs}};{{end}} },{{else}}{{range .Normalized.Outputs}}{{bindtype .Type $structs}},{{end}}{{end}} error) {
+		func Unmarshall{{.Normalized.Name}}(output []byte) ({{if .Structured}}struct{ {{range .Normalized.Outputs}}{{.Name}} {{bindtype .Type $structs}};{{end}} },{{else}}{{range .Normalized.Outputs}}{{bindtype .Type $structs}},{{end}}{{end}} error) {
 			{{if .Structured}}
 			outstruct := new(struct{ {{range .Normalized.Outputs}} {{.Name}} {{bindtype .Type $structs}}; {{end}} })
 			{{end}}
@@ -431,9 +431,9 @@ var (
 		  return _{{$contract.Type}}.Contract.{{.Normalized.Name}}(&_{{$contract.Type}}.TransactOpts {{range $i, $_ := .Normalized.Inputs}}, {{.Name}}{{end}})
 		}
 
-		// Get{{.Normalized.Name}}CallData returns the raw call data for the contract method 0x{{printf "%x" .Original.ID}}.
+		// Generate{{.Normalized.Name}}CallData returns the raw call data for the contract method 0x{{printf "%x" .Original.ID}}.
 		// It does not actually call the contract.
-		func (_{{$contract.Type}} *{{$contract.Type}}Caller) Get{{.Normalized.Name}}CallData({{range $idx, $el := .Normalized.Inputs}}{{if $idx}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) ([]byte, error) {
+		func Generate{{.Normalized.Name}}CallData({{range $idx, $el := .Normalized.Inputs}}{{if $idx}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) ([]byte, error) {
 			parsed, err := {{$contract.Type}}MetaData.GetAbi()
 			if err != nil {
 				return nil, err
