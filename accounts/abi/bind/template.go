@@ -340,9 +340,9 @@ var (
 			{{end}}
 		}
 
-		// Get{{.Normalized.Name}}CallData returns the raw call data for the contract method 0x{{printf "%x" .Original.ID}}.
+		// Generate{{.Normalized.Name}}CallData returns the raw call data for the contract method 0x{{printf "%x" .Original.ID}}.
 		// It does not actually call the contract.
-		func (_{{$contract.Type}} *{{$contract.Type}}Caller) Get{{.Normalized.Name}}CallData({{range $idx, $el := .Normalized.Inputs}}{{if $idx}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) ([]byte, error) {
+		func Generate{{.Normalized.Name}}CallData({{range $idx, $el := .Normalized.Inputs}}{{if $idx}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) ([]byte, error) {
 			parsed, err := {{$contract.Type}}MetaData.GetAbi()
 			if err != nil {
 				return nil, err
@@ -355,6 +355,44 @@ var (
 
 			return out, nil
 		}
+
+		// Unmarshall{{.Normalized.Name}} unmarshalls the binary output of {{.Normalized.Name}}.
+		//
+		// Solidity: {{.Original.String}}
+		func Unmarshall{{.Normalized.Name}}(output []byte) ({{if .Structured}}struct{ {{range .Normalized.Outputs}}{{.Name}} {{bindtype .Type $structs}};{{end}} },{{else}}{{range .Normalized.Outputs}}{{bindtype .Type $structs}},{{end}}{{end}} error) {
+			{{if .Structured}}
+			outstruct := new(struct{ {{range .Normalized.Outputs}} {{.Name}} {{bindtype .Type $structs}}; {{end}} })
+			{{end}}
+
+			parsed, err := {{$contract.Type}}MetaData.GetAbi()
+			if err != nil {
+				{{if .Structured}}
+				return *outstruct, err
+				{{else}}
+				return {{range $i, $_ := .Normalized.Outputs}}*new({{bindtype .Type $structs}}), {{end}} err
+				{{end}}
+			}
+
+			out, err := parsed.Unpack("{{.Original.Name}}", output)
+			{{if .Structured}}
+			if err != nil {
+				return *outstruct, err
+			}
+			{{range $i, $t := .Normalized.Outputs}} 
+			outstruct.{{.Name}} = *abi.ConvertType(out[{{$i}}], new({{bindtype .Type $structs}})).(*{{bindtype .Type $structs}}){{end}}
+
+			return *outstruct, err
+			{{else}}
+			if err != nil {
+				return {{range $i, $_ := .Normalized.Outputs}}*new({{bindtype .Type $structs}}), {{end}} err
+			}
+			{{range $i, $t := .Normalized.Outputs}}
+			out{{$i}} := *abi.ConvertType(out[{{$i}}], new({{bindtype .Type $structs}})).(*{{bindtype .Type $structs}}){{end}}
+			
+			return {{range $i, $t := .Normalized.Outputs}}out{{$i}}, {{end}} err
+			{{end}}
+		}
+
 
 		// {{.Normalized.Name}} is a free data retrieval call binding the contract method 0x{{printf "%x" .Original.ID}}.
 		//
@@ -391,6 +429,22 @@ var (
 		// Solidity: {{.Original.String}}
 		func (_{{$contract.Type}} *{{$contract.Type}}TransactorSession) {{.Normalized.Name}}({{range $i, $_ := .Normalized.Inputs}}{{if ne $i 0}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) (*types.Transaction, error) {
 		  return _{{$contract.Type}}.Contract.{{.Normalized.Name}}(&_{{$contract.Type}}.TransactOpts {{range $i, $_ := .Normalized.Inputs}}, {{.Name}}{{end}})
+		}
+
+		// Generate{{.Normalized.Name}}CallData returns the raw call data for the contract method 0x{{printf "%x" .Original.ID}}.
+		// It does not actually call the contract.
+		func Generate{{.Normalized.Name}}CallData({{range $idx, $el := .Normalized.Inputs}}{{if $idx}},{{end}} {{.Name}} {{bindtype .Type $structs}} {{end}}) ([]byte, error) {
+			parsed, err := {{$contract.Type}}MetaData.GetAbi()
+			if err != nil {
+				return nil, err
+			}
+
+			out, err := parsed.Pack("{{.Original.Name}}" {{range .Normalized.Inputs}}, {{.Name}}{{end}})
+			if err != nil {
+				return nil, err
+			}
+
+			return out, nil
 		}
 	{{end}}
 
